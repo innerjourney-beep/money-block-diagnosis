@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>お金のブロック診断｜どこから紐解く？</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+    :root {
+      --bg-primary: #0d1b3e;
+      --bg-card: #f7f3ec;
+      --bg-card2: #ede7db;
+      --accent-gold: #c9a96e;
+      --accent-gold-light: #e8d5b0;
+      --accent-gold-dim: rgba(201,169,110,0.15);
+      /* テキスト：ネイビー背景の上 */
+      --text-primary: #f0ead8;
+      --text-secondary: #b0c0d8;
+      --text-muted: #6a7ea0;
+      /* テキスト：クリームカードの上 */
+      --text-on-card: #1a2540;
+      --text-on-card-sub: #3d5272;
+      --text-on-card-muted: #7a8aab;
+      --border: rgba(201,169,110,0.2);
+      --border-hover: rgba(201,169,110,0.5);
+      --success: #6cb88a;
+      --type-border: rgba(201,169,110,0.2);
+      --shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* ── SCREEN BASE ── */
+    .screen {
+      animation: fadeIn 0.55s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── TOP DECORATION ── */
+    .deco-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .deco-line::before, .deco-line::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+    }
+    .deco-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-gold);
+    }
+
+    /* ── INTRO SCREEN ── */
+    .intro-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .intro-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .intro-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 500;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .intro-title span {
+      color: var(--accent-gold);
+    }
+
+    .intro-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .intro-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .intro-card p {
+      font-size: 14px;
+      line-height: 2;
+      color: var(--text-secondary);
+    }
+
+    .intro-card p + p {
+      margin-top: 14px;
+    }
+
+    .intro-card strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .info-chip {
+      flex: 1;
+      background: var(--accent-gold-dim);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--accent-gold-light);
+    }
+
+    .info-chip .num {
+      display: block;
+      font-size: 22px;
+      font-family: 'Noto Serif JP', serif;
+      color: var(--accent-gold);
+      margin-bottom: 4px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, #c9a96e, #a07840);
+      border: none;
+      border-radius: 12px;
+      color: #07090f;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(201,169,110,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(201,169,110,0.4);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      padding: 10px 20px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+
+    /* ── ATTRIBUTE SCREEN ── */
+    .attr-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .attr-sub {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .attr-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .attr-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    .attr-btn:hover {
+      border-color: var(--accent-gold);
+      background: var(--accent-gold-dim);
+      transform: translateX(4px);
+    }
+
+    .attr-btn .attr-badge {
+      display: inline-block;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--accent-gold-dim);
+      border: 1px solid var(--accent-gold);
+      color: var(--accent-gold);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 26px;
+      margin-right: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      margin-bottom: 32px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .progress-count {
+      font-size: 11px;
+      color: var(--accent-gold);
+    }
+
+    .progress-bar-bg {
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #a07840, #c9a96e);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── QUESTION SCREEN ── */
+    .question-tag {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .question-text {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(15px, 3vw, 18px);
+      font-weight: 400;
+      line-height: 1.8;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.25s;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.7;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent-gold);
+      background: var(--accent-gold-dim);
+      transform: translateX(4px);
+    }
+
+    .option-btn.selected {
+      border-color: var(--accent-gold);
+      background: rgba(201,169,110,0.12);
+    }
+
+    .option-letter {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      color: var(--accent-gold);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.25s, border-color 0.25s;
+      margin-top: 1px;
+    }
+
+    .option-btn:hover .option-letter,
+    .option-btn.selected .option-letter {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: #07090f;
+    }
+
+    /* ── NAV ── */
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    /* ── LOADING ── */
+    .loading-screen {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 48px; height: 48px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* ── RESULT SCREEN ── */
+    .result-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .result-eyebrow {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .result-type-badge {
+      display: inline-block;
+      padding: 8px 24px;
+      background: var(--accent-gold-dim);
+      border: 1px solid var(--accent-gold);
+      border-radius: 99px;
+      font-size: 13px;
+      color: var(--accent-gold-light);
+      margin-bottom: 20px;
+    }
+
+    .result-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 500;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .result-title .hl {
+      color: var(--accent-gold);
+    }
+
+    .result-body {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+
+    .result-body p {
+      font-size: 14px;
+      line-height: 2.1;
+      color: var(--text-secondary);
+    }
+
+    .result-body p + p {
+      margin-top: 16px;
+    }
+
+    .result-body strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .result-body .quote-block {
+      border-left: 2px solid var(--accent-gold);
+      padding-left: 16px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 2;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .result-section-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 16px;
+      color: var(--accent-gold-light);
+      margin: 28px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .observe-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .observe-card {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .observe-card.primary-card {
+      border-color: rgba(201,169,110,0.4);
+      background: rgba(201,169,110,0.06);
+    }
+
+    .observe-card .obs-num {
+      font-size: 11px;
+      color: var(--accent-gold);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .observe-card .obs-q {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .observe-card .obs-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, rgba(201,169,110,0.08), rgba(201,169,110,0.03));
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    .cta-box .cta-tag {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent-gold);
+      margin-bottom: 12px;
+    }
+
+    .cta-box .cta-text {
+      font-size: 14px;
+      line-height: 1.9;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .cta-box .cta-text strong {
+      color: var(--text-primary);
+    }
+
+    .btn-cta {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #c9a96e, #a07840);
+      border: none;
+      border-radius: 10px;
+      color: #07090f;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(201,169,110,0.3);
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(201,169,110,0.4);
+    }
+
+    .btn-cta-outline {
+      display: inline-block;
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--accent-gold);
+      border-radius: 10px;
+      color: var(--accent-gold);
+      font-size: 14px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-cta-outline:hover {
+      background: var(--accent-gold-dim);
+    }
+
+    .cta-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .retry-row {
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    .cutoff-icon {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+
+    /* ── CUTOFF RESULT STYLE ── */
+    .result-cutoff .result-title {
+      font-size: clamp(18px, 4vw, 24px);
+    }
+
+    /* ── score bars ── */
+    .score-section {
+      margin-bottom: 8px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .score-label {
+      width: 60px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .score-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s ease 0.3s;
+    }
+
+    .fill-border { background: #8ab4d4; }
+    .fill-emotion { background: #c4879a; }
+    .fill-belief { background: #8db89e; }
+
+    .score-val {
+      width: 24px;
+      text-align: right;
+      font-size: 12px;
+      color: var(--accent-gold);
+    }
+
+    .score-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .score-box-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .info-row { flex-direction: column; }
+      .intro-card { padding: 24px 20px; }
+      .result-body { padding: 24px 20px; }
+    }
+
+    /* ── カード内テキスト（クリーム背景上） ── */
+    .intro-card p { color: var(--text-on-card-sub); }
+    .intro-card strong { color: var(--text-on-card); }
+    .info-chip { color: var(--accent-gold); background: rgba(201,169,110,0.1); border-color: rgba(201,169,110,0.3); }
+    .info-chip .num { color: #a07840; }
+
+    .attr-btn { color: var(--text-on-card); }
+    .attr-btn .attr-badge { background: rgba(13,27,62,0.07); border-color: var(--accent-gold); color: #a07840; }
+
+    .option-btn { color: var(--text-on-card); }
+    .option-btn:hover { background: #f0e6ce; border-color: var(--accent-gold); }
+    .option-btn.selected { background: #e8d9b0; border-color: var(--accent-gold); }
+
+    .score-box-title { color: var(--text-on-card-muted); letter-spacing: 2px; }
+    .score-label { color: var(--text-on-card-sub); }
+    .score-bar-bg { background: rgba(13,27,62,0.08); }
+
+    .result-body p { color: var(--text-on-card-sub); }
+    .result-body strong { color: var(--text-on-card); }
+    .result-section-title { color: var(--text-on-card); border-bottom-color: rgba(201,169,110,0.25); }
+
+    .observe-card { background: rgba(13,27,62,0.05); border-color: rgba(201,169,110,0.2); }
+    .observe-card.primary-card { background: rgba(201,169,110,0.08); border-color: rgba(201,169,110,0.35); }
+    .observe-card .obs-num { color: var(--accent-gold); }
+    .observe-card .obs-q { color: var(--text-on-card); }
+    .observe-card .obs-desc { color: var(--text-on-card-sub); }
+
+    .cta-box .cta-text { color: var(--text-secondary); }
+    .cta-box .cta-text strong { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────
+
+const ATTR_LABELS = { A: '個人事業・フリーランス・起業家', B: '会社員・アルバイト・パート', C: '主婦・主夫・現在お休み中・フリーター' };
+
+const QUESTIONS = [
+  // Q0 足切り
+  {
+    id: 'q0',
+    type: 'cutoff',
+    text: 'クレジットカードの請求書や、借金・ローンの残高を見る時、どうしますか？\n（該当しない方は銀行口座の残高で考えてください）',
+    options: [
+      { letter: 'A', text: '定期的に確認して、数字を把握した上で対処を考える', tags: [], cutoff: false },
+      { letter: 'B', text: '怖いけど、ちゃんと確認する', tags: [], cutoff: false },
+      { letter: 'C', text: '怖くて直視できない・なるべく見ないようにしている', tags: [], cutoff: true },
+      { letter: 'D', text: '「何とかなる」「いつかどこかから来る」と思って気にしないようにしている', tags: [], cutoff: true },
+    ]
+  },
+  // Q1
+  {
+    id: 'q1',
+    textByAttr: {
+      A: '自分のサービスに値段をつけようとした時、最初に何が起きますか？',
+      B: '給料を上げてほしい・副業で稼いでみたいと思った時、何が起きますか？',
+      C: '自分のためにお金を稼いでみたいと思った時、何が起きますか？',
+    },
+    options: [
+      { letter: 'A', text: '「親より稼いでいいのかな」「家族に申し訳ない」という気持ちが浮かぶ', tags: ['境界線'] },
+      { letter: 'B', text: '「相場より安めにしよう」と思う、または価格を上げることへの躊躇がある', tags: ['信念'] },
+      { letter: 'C', text: '胸や喉のあたりがきゅっとなる。何が怖いかはわからない', tags: ['感情', '深'] },
+      { letter: 'D', text: '考えようとすると、親や過去の誰かの顔・声が浮かぶ', tags: ['境界線', '深'] },
+    ]
+  },
+  // Q2
+  {
+    id: 'q2',
+    textByAttr: {
+      A: '自己投資や自分へのご褒美にお金を使おうとした時、どうなりますか？',
+      B: '趣味・美容・好きなものに自分だけのためにお金を使おうとした時、どうなりますか？',
+      C: '家族のためではなく、自分だけのためにお金を使おうとした時、どうなりますか？',
+    },
+    options: [
+      { letter: 'A', text: '「こんなことにお金を使っていいのかな」と罪悪感が湧く', tags: ['信念'] },
+      { letter: 'B', text: '「家族（パートナー・親）に何か言われそう」という気持ちが来る', tags: ['境界線'] },
+      { letter: 'C', text: 'なんとなく手が止まる。理由を言葉にできない', tags: ['感情', '深'] },
+      { letter: 'D', text: '素直に使える', tags: [] },
+    ]
+  },
+  // Q3
+  {
+    id: 'q3',
+    text: 'お金の不安を感じた時、あなたはどうしますか？',
+    options: [
+      { letter: 'A', text: '稼ぐ方法・節約方法を調べる（行動で解決しようとする）', tags: ['信念'] },
+      { letter: 'B', text: '「大丈夫」「何とかなる」と自分に言い聞かせる', tags: ['感情'] },
+      { letter: 'C', text: '不安を感じないように、別のことに意識を向ける', tags: ['感情'] },
+      { letter: 'D', text: '不安をそのまま感じようとするが、怖くてそこで止まる', tags: ['感情', '深'] },
+    ]
+  },
+  // Q4
+  {
+    id: 'q4',
+    text: 'あなたと周りの人との関係で、一番近いのはどれですか？',
+    options: [
+      { letter: 'A', text: '自分より相手を優先してしまう。お金の場面でも「相手にとっていいか」が先に来る', tags: ['境界線'] },
+      { letter: 'B', text: '家族や親が安心してくれると、自分も安心できる感覚がある', tags: ['境界線', '深'] },
+      { letter: 'C', text: '「誰かの役に立てるから価値がある」という感覚が強い', tags: ['境界線', '深'] },
+      { letter: 'D', text: '相手の感情と自分の感情が混ざって、どっちが自分の気持ちかわからなくなることがある', tags: ['境界線', '深'] },
+    ]
+  },
+  // Q5
+  {
+    id: 'q5',
+    text: '「頭ではわかっている。でも身体が動かない」という経験はありますか？',
+    options: [
+      { letter: 'A', text: 'あまりない。やろうと思えばできる方だ', tags: [] },
+      { letter: 'B', text: 'ある。「自分にはできない」という思い込みが邪魔している気がする', tags: ['信念'] },
+      { letter: 'C', text: 'ある。何が邪魔をしているのか、言葉にできない', tags: ['感情', '深'] },
+      { letter: 'D', text: 'ある。「誰かをがっかりさせそう」という感覚が出てくる', tags: ['境界線'] },
+    ]
+  },
+  // Q6
+  {
+    id: 'q6',
+    textByAttr: {
+      A: '高額な自分のサービス価格や、大きな売上の数字を見た時、身体はどうなりますか？',
+      B: '給与明細や貯金残高など、自分のお金の数字を正面から見た時、身体はどうなりますか？',
+      C: '家計の数字や、自分に関わるお金の金額を正面から見た時、身体はどうなりますか？',
+    },
+    options: [
+      { letter: 'A', text: '特に何も感じない、または純粋にわくわくする', tags: [] },
+      { letter: 'B', text: '「大変だな」「どうしよう」と頭で考える', tags: ['信念'] },
+      { letter: 'C', text: '心臓がドキドキしたり、胃や胸がきゅっとなる', tags: ['感情', '深'] },
+      { letter: 'D', text: 'その数字を直視できない・目が滑る', tags: ['感情', '深'] },
+    ]
+  },
+  // Q7
+  {
+    id: 'q7',
+    text: '稼ぐことについて、一番近いのはどれですか？',
+    options: [
+      { letter: 'A', text: '頑張らないと稼げない・苦労するものだと思っている', tags: ['信念'] },
+      { letter: 'B', text: '稼ぎすぎると人間関係が壊れそう・自分が変わってしまいそうで怖い', tags: ['境界線'] },
+      { letter: 'C', text: '稼げるようになると、今の自分じゃなくなる気がして怖い', tags: ['感情', '深'] },
+      { letter: 'D', text: '稼ぐこと自体への抵抗はない。でも何かで止まっている', tags: ['感情'] },
+    ]
+  },
+  // Q8
+  {
+    id: 'q8',
+    text: '内観やジャーナリング、自己分析をやったことはありますか？',
+    options: [
+      { letter: 'A', text: 'ほとんどない', tags: [] },
+      { letter: 'B', text: 'やっている。でも「これで合っているのかわからない」', tags: ['信念'] },
+      { letter: 'C', text: 'やっている。でもある地点で「怖くて先に進めない」と感じる', tags: ['感情', '深'] },
+      { letter: 'D', text: 'やっている。内観しても同じパターンがループする', tags: ['感情', '深'] },
+    ]
+  },
+  // Q9
+  {
+    id: 'q9',
+    textByAttr: {
+      A: '売上が上がった・大きな契約が取れた時、どんな気持ちになりますか？',
+      B: '給料が上がった・ボーナスが入った時、どんな気持ちになりますか？',
+      C: '予想より多くお金が手元に残った・臨時収入が入った時、どうなりますか？',
+    },
+    options: [
+      { letter: 'A', text: '素直に嬉しい', tags: [] },
+      { letter: 'B', text: '嬉しいけど「また減るかも」という不安がすぐ来る', tags: ['信念'] },
+      { letter: 'C', text: '嬉しさと同時に罪悪感や「自分にはもったいない」という感覚がある', tags: ['境界線'] },
+      { letter: 'D', text: '金額が大きくなるほど逆に怖くなる', tags: ['感情', '深'] },
+    ]
+  },
+  // Q10
+  {
+    id: 'q10',
+    text: 'うまくいかない時、どこに原因を求めますか？',
+    options: [
+      { letter: 'A', text: '環境・タイミング・運など、外側の何かが原因だと思う', tags: [] },
+      { letter: 'B', text: '自分の行動や方法が間違っていたと思う', tags: ['信念'] },
+      { letter: 'C', text: '自分の思い込みや感情が影響していると思う', tags: ['信念', '感情'] },
+      { letter: 'D', text: '自分の内側に何かあると感じる。でも何かはわからない', tags: ['感情', '深'] },
+    ]
+  },
+  // Q11
+  {
+    id: 'q11',
+    text: '自分と向き合う時、あなたはどうしていますか？',
+    options: [
+      { letter: 'A', text: '特に何もしていない。きっかけがあれば向き合おうと思っている', tags: [] },
+      { letter: 'B', text: '本を読んだりセミナーに参加して、知識を増やしている', tags: ['信念'] },
+      { letter: 'C', text: '日々ジャーナリングや内観をしている。でも一人だと限界を感じることがある', tags: ['深', '主体性あり'] },
+      { letter: 'D', text: '誰かに話を聞いてもらったり、一緒に見てもらいたいと思っている', tags: ['助けてちゃん'] },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────
+// RESULT TEXTS
+// ─────────────────────────────────────────
+
+const RESULT_TEXTS = {
+
+  cutoff: {
+    title: '今のあなたに必要なのは、\n"安心の土台"を作ることです',
+    intro: `診断結果を受け取ってください。
+
+あなたは今、お金と向き合おうとしています。それだけで、十分すごいことです。
+
+ただ、一つだけ伝えたいことがあります。
+
+お金の数字を直視することが怖い。または、考えないようにしている。
+
+これは、あなたが弱いからではありません。<strong>あなたの神経系が、まだ「安心」を感じられていないだけです。</strong>
+
+不安や恐怖が強い状態で無理にブロックを探しにいくと、逆に苦しくなります。
+
+今のあなたに必要なのは、ブロックを外すことではなく、<strong>まず自分の内側に「大丈夫」という感覚を少しずつ育てること。</strong>
+
+そのために、まずはこの一冊を読んでみてください。あなたが感じている不安の正体が何なのか、その全体像が見えるだけでも、内側に少し余白が生まれます。`,
+    cta: 'kindle',
+  },
+
+  '境界線-shallow': {
+    badge: '境界線タイプ',
+    title: 'あなたのブロックの入口は、\n「境界線」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「境界線」</strong>です。
+
+少し聞いてみます。
+
+誰かが不安そうにしていると、自分まで不安になる。
+相手が喜ぶなら、自分が我慢してもいいと思いやすい。
+親や家族が安心してくれると、やっと自分も安心できる。
+
+思い当たることはありませんか？
+
+これは実は、<strong>相手の感情やエネルギーを、自分のものとして扱っている</strong>んです。
+
+親の不安、パートナーの期待、友人の感情。人が変わるだけで、やっていることは同じ。
+
+だから「お金の問題」に見えているけれど、本当は「自分と他人の境目」がブロックの根っこにある。
+
+自分より他人を優先することが当たり前になっていると、お金を受け取ることにも、価格を上げることにも、無意識にブレーキがかかります。`,
+    primaryObs: { num: '② まず最初にこれを', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。境界線が曖昧な人ほど、他人の感情を自分のものとして処理しています。この問いが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '① あわせて', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。' },
+      { num: '③ あわせて', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。' },
+    ],
+    cta: 'kindle',
+  },
+
+  '境界線-deep': {
+    badge: '境界線タイプ',
+    title: 'あなたのブロックの入口は、\n「境界線」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「境界線」</strong>です。
+
+少し聞いてみます。
+
+誰かが不安そうにしていると、自分まで不安になる。
+相手が喜ぶなら、自分が我慢してもいいと思いやすい。
+親や家族が安心してくれると、やっと自分も安心できる。
+
+思い当たることはありませんか？
+
+これは実は、<strong>相手の感情やエネルギーを、自分のものとして扱っている</strong>んです。
+
+だから「お金の問題」に見えているけれど、本当は「自分と他人の境目」がブロックの根っこにある。`,
+    primaryObs: { num: '② まず最初にこれを', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。境界線が曖昧な人ほど、他人の感情を自分のものとして処理しています。この問いが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '① あわせて', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。' },
+      { num: '③ あわせて', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。' },
+    ],
+    cta: 'session',
+    sessionText: `ここまで読んで、「観察はできている。でも一人では先に進めない」と感じた方へ。
+
+境界線の問題は特にそうなんですが、<strong>自分のスコトーマ（盲点）は、自分では見えません。</strong>
+
+相手の感情を自分のものとして扱っていることに、自分ではなかなか気づけない。「これは私の感情なのか、相手から引き継いだものなのか」——その仕分けは、一人でやるには限界があります。
+
+あなたには、一緒に見てもらうタイミングが来ているかもしれません。
+
+体験セッションでは、60-90分であなたの中にある「自分のもの」と「引き継いだもの」を一緒に仕分けていきます。セッション後には、あなた専用の根本原因特定シートをゼロから作成してお渡しします。`,
+  },
+
+  '感情-shallow': {
+    badge: '感情タイプ',
+    title: 'あなたのブロックの入口は、\n「感情」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「感情」</strong>です。
+
+一つ聞かせてください。
+
+「不安を感じています」と言いながら、実は頭の中で「不安」というラベルを貼っているだけ、ということはありませんか？
+
+本当に感じるとは、身体が動くことです。
+心臓がドキドキする。胃がきゅっとなる。涙が出る。逃げたくなる。
+
+そういう身体の反応を、ちゃんと感じたことがありますか？
+
+感情を感じることが土台にないと、内観をどれだけ続けても同じところをぐるぐる回り続けます。なぜなら、<strong>全ての入口が感情だから。</strong>
+
+ネガティブな感情を実は感じていないと、無自覚に負のパターンを自分で創り出してしまう。これは悪いわけじゃない。ただ、感情を感じる練習をしてこなかっただけです。`,
+    primaryObs: { num: '① まず最初にこれを', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。感情タイプの人は、感じているつもりで実は思考で処理していることが多い。この区別ができるようになることが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '② あわせて', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。' },
+      { num: '③ あわせて', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。' },
+    ],
+    cta: 'kindle',
+  },
+
+  '感情-deep': {
+    badge: '感情タイプ',
+    title: 'あなたのブロックの入口は、\n「感情」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「感情」</strong>です。
+
+あなたはすでに、感情と向き合う力があります。
+
+内観も続けてきた。ある地点まで来ると「怖くて先に進めない」という感覚も知っている。同じパターンがループすることも、自覚している。
+
+それだけの土台がある。`,
+    primaryObs: { num: '① まず最初にこれを', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。感情タイプの人は、感じているつもりで実は思考で処理していることが多い。この区別ができるようになることが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '② あわせて', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。' },
+      { num: '③ あわせて', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。' },
+    ],
+    cta: 'session',
+    sessionText: `ここまで読んで、「観察はできている。でも一人では先に進めない」と感じた方へ。
+
+<strong>「考えても出てこない場所」に、本当の答えがあります。</strong>
+
+その場所は、思考では届かない。感情を感じながら、一緒に潜っていく必要がある。
+
+どれだけ内観が深くても、自分のスコトーマ（盲点）は自分では見えません。
+
+誰かと一緒に見ることで初めて、「あ、私ってずっとここから動いていなかったんだ」という気づきが生まれます。
+
+体験セッションでは、60-90分であなたが「怖くて先に進めない」と感じている場所に、一緒に降りていきます。思考ではなく体感レベルで「何かが外れた」という瞬間を、多くの方が経験されています。
+
+セッション後には、あなた専用の根本原因特定シートをゼロから作成してお渡しします。`,
+  },
+
+  '信念-shallow': {
+    badge: '信念・思い込みタイプ',
+    title: 'あなたのブロックの入口は、\n「信念・思い込み」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「信念・思い込み」</strong>です。
+
+少し聞いてみます。
+
+「頑張らないとお金を得られない」
+「自分にはそこまでの価値はない」
+「お金を欲しがるのははしたない」
+
+こういった考え、いつの間にか当たり前になっていませんか？
+
+これは悪いわけじゃない。<strong>親や社会から、無自覚に引き継いだものです。</strong>
+
+幼い頃に生き延びるために身につけた戦略が、大人になった今も信念として動き続けている。「我慢するのが当たり前」「自分より相手を立てなきゃいけない」——これらは、あなたが選んだ価値観じゃない。引き継いだものです。
+
+引き継いだものは、書き換えられます。ただ、頭で「これは思い込みだ」とわかっても変わらない。感情レベルで向き合って初めて、信念は動き始めます。`,
+    primaryObs: { num: '③ まず最初にこれを', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。信念タイプの人は、引き継いだ思い込みが「自分の考え」として溶け込んでいます。「これって本当に私が選んだ？」と問うことが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '① あわせて', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。' },
+      { num: '② あわせて', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。' },
+    ],
+    cta: 'kindle',
+  },
+
+  '信念-deep': {
+    badge: '信念・思い込みタイプ',
+    title: 'あなたのブロックの入口は、\n「信念・思い込み」です',
+    intro: `診断結果を受け取ってください。
+
+あなたのお金のブロック、その入口にあるのは<strong>「信念・思い込み」</strong>です。
+
+あなたはすでに、自分の思い込みに気づいている。
+
+「これは親から引き継いだものかもしれない」「この信念が自分を止めているかもしれない」——そこまで辿り着いている。でも変わらない。
+
+それはなぜか。
+
+<strong>信念を書き換えるには、思考じゃなくて感情が必要だから。</strong>
+
+頭で「これは思い込みだ」とわかっても、身体がまだそこに貼りついている。感情レベルで向き合って初めて、何十年も積み上げてきた信念が動き始めます。`,
+    primaryObs: { num: '③ まず最初にこれを', q: 'この信念、自分で選んだもの？', desc: '「頑張らないとお金を得られない」「自分にはその価値がない」——それは自分が選んだ考えなのか。気づいたらそう思っていたのか。信念タイプの人は、引き継いだ思い込みが「自分の考え」として溶け込んでいます。「これって本当に私が選んだ？」と問うことが、あなたの一番の入口です。' },
+    subObs: [
+      { num: '① あわせて', q: 'これは頭の反応？それとも身体の反応？', desc: '「不安だ」と頭で思っているのか。それとも、胸がきゅっとなる、心臓がドキドキするという身体の反応があるのか。' },
+      { num: '② あわせて', q: 'この感情、本当に自分のもの？', desc: 'その不安や恐怖、自分の中から来ているのか。それとも、親や誰かから無自覚に引き継いだものなのか。' },
+    ],
+    cta: 'session',
+    sessionText: `ここまで読んで、「観察はできている。でも一人では先に進めない」と感じた方へ。
+
+あなたには、向き合う覚悟がある。でも<strong>自分のスコトーマ（盲点）は、自分では見えません。</strong>
+
+どれだけ内観が深くても、自分のパターンは自分では見えにくい。誰かと一緒に見ることで初めて、「あ、私ってずっとここから動いていなかったんだ」という気づきが生まれます。
+
+体験セッションでは、60-90分であなたが「思い込みだとわかっているのに手放せない」信念の、さらに奥にあるものを一緒に見つけにいきます。
+
+信念は頭で気づいても変わりません。その信念を握りしめている感情に触れた時、初めて手放せるようになります。
+
+セッション後には、あなた専用の根本原因特定シートをゼロから作成してお渡しします。`,
+  },
+
+  'helper': {
+    ctaText: `ここまで読んで、「誰かに見つけてほしい」「この苦しさをなんとかしてほしい」と感じているかもしれません。
+
+その気持ちは自然なことです。
+
+ただ、一つだけ伝えたいことがあります。
+
+<strong>ブロックは、誰かに外してもらうものではなく、自分で気づいて、自分で向き合うプロセスの中で外れていくものです。</strong>
+
+まずは、この診断で出た「観察の一手」を、日常の中で試してみてください。小さな気づきの積み重ねが、あなたの土台になります。
+
+今後もKindleやメルマガで、その土台を一緒に作っていく内容をお届けしていきます。次回作も楽しみにしていてくださいね。`,
+  }
+};
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+
+let state = {
+  screen: 'intro',       // intro | attr | questions | loading | result
+  attribute: null,       // A | B | C
+  currentQ: 0,           // index in QUESTIONS (0 = Q0)
+  answers: {},           // { q0: optionIndex, q1: optionIndex, ... }
+  isCutoff: false,
+};
+
+// ─────────────────────────────────────────
+// SCORING
+// ─────────────────────────────────────────
+
+function calcResult() {
+  const scores = { '境界線': 0, '感情': 0, '信念': 0 };
+  const deepByType = { '境界線': 0, '感情': 0, '信念': 0 };
+  let deepTotal = 0;
+  let q11Answer = null;
+  let isHelper = false;
+
+  QUESTIONS.forEach((q, qi) => {
+    const ansIdx = state.answers[q.id];
+    if (ansIdx === undefined) return;
+    const opt = q.options[ansIdx];
+    const tags = opt.tags || [];
+
+    // Q11 special
+    if (q.id === 'q11') {
+      q11Answer = opt.letter;
+      if (tags.includes('助けてちゃん')) isHelper = true;
+    }
+
+    tags.forEach(tag => {
+      if (tag === '深') { deepTotal++; }
+      else if (tag === '境界線') { scores['境界線']++; if (tags.includes('深')) deepByType['境界線']++; }
+      else if (tag === '感情') { scores['感情']++; if (tags.includes('深')) deepByType['感情']++; }
+      else if (tag === '信念') { scores['信念']++; if (tags.includes('深')) deepByType['信念']++; }
+    });
+  });
+
+  // Main type
+  let mainType = '感情';
+  let maxScore = -1;
+  ['境界線', '感情', '信念'].forEach(t => {
+    if (scores[t] > maxScore || (scores[t] === maxScore && deepByType[t] > deepByType[mainType])) {
+      maxScore = scores[t];
+      mainType = t;
+    }
+  });
+
+  // Level
+  let level;
+  if (deepTotal >= 5 && q11Answer === 'C') {
+    level = 'deep'; // セッション適合
+  } else if (deepTotal >= 5 && q11Answer === 'D') {
+    level = 'shallow'; // 助けてちゃん
+    isHelper = true;
+  } else {
+    level = 'shallow';
+  }
+
+  return { mainType, level, deepTotal, scores, isHelper };
+}
+
+// ─────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────
+
+function render() {
+  const app = document.getElementById('app');
+  switch (state.screen) {
+    case 'intro':    app.innerHTML = renderIntro(); break;
+    case 'attr':     app.innerHTML = renderAttr(); break;
+    case 'questions':app.innerHTML = renderQuestion(); break;
+    case 'loading':  app.innerHTML = renderLoading(); break;
+    case 'result':   app.innerHTML = renderResult(); break;
+  }
+  bindEvents();
+}
+
+// ── INTRO ──
+function renderIntro() {
+  return `<div class="screen">
+    <div class="deco-line"><div class="deco-dot"></div></div>
+    <div class="intro-header">
+      <div class="intro-label">Money Block Diagnosis</div>
+      <h1 class="intro-title">あなたのお金のブロック、<br><span>どこから紐解く？</span><br>診断</h1>
+      <p class="intro-sub">あなたのお金への反応パターンから<br>ブロックの根っこを特定します</p>
+    </div>
+    <div class="intro-card">
+      <p>「稼ぎたいのに動けない」「値段をつけようとすると手が止まる」「お金が増えると怖くなる」——</p>
+      <p>これはあなたが弱いからではありません。<strong>お金のブロックには、必ず"根っこ"があります。</strong></p>
+      <p>この診断では、全13問の質問を通じて、あなたのブロックがどこから来ているのかを特定します。</p>
+      <div class="info-row">
+        <div class="info-chip"><span class="num">13</span>問</div>
+        <div class="info-chip"><span class="num">1〜3</span>分</div>
+        <div class="info-chip"><span class="num">無料</span>診断</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-start">診断をはじめる →</button>
+  </div>`;
+}
+
+// ── ATTR ──
+function renderAttr() {
+  return `<div class="screen">
+    <div class="deco-line"><div class="deco-dot"></div></div>
+    <div class="attr-title">あなたの今のスタイルに<br>一番近いのはどれですか？</div>
+    <p class="attr-sub">回答に合わせて質問文を調整します</p>
+    <div class="attr-options">
+      ${['A','B','C'].map(k => `
+        <button class="attr-btn" data-attr="${k}">
+          <span class="attr-badge">${k}</span>${ATTR_LABELS[k]}
+        </button>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ── QUESTION ──
+function renderQuestion() {
+  const qi = state.currentQ;
+  const q = QUESTIONS[qi];
+  const total = QUESTIONS.length; // 12 (Q0〜Q11)
+  const progress = (qi / total) * 100;
+  const qLabel = qi === 0 ? 'はじめに' : `Q${qi}`;
+
+  const qText = q.textByAttr ? q.textByAttr[state.attribute] : q.text;
+  const selectedIdx = state.answers[q.id];
+
+  return `<div class="screen">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span class="progress-label">${qLabel}</span>
+        <span class="progress-count">${qi + 1} / ${total}</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${progress}%"></div>
+      </div>
+    </div>
+
+    <div class="question-tag">Question ${qi + 1}</div>
+    <p class="question-text">${qText.replace(/\n/g,'<br>')}</p>
+
+    <div class="options-list">
+      ${q.options.map((opt, idx) => `
+        <button class="option-btn ${selectedIdx === idx ? 'selected' : ''}" data-idx="${idx}">
+          <div class="option-letter">${opt.letter}</div>
+          <div>${opt.text}</div>
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-secondary" id="btn-prev">${qi === 0 ? '← 戻る' : '← 前の質問'}</button>
+      ${selectedIdx !== undefined
+        ? `<button class="btn-primary" id="btn-next" style="width:auto;padding:14px 32px">${qi === total - 1 ? '結果を見る →' : '次へ →'}</button>`
+        : `<span style="font-size:12px;color:var(--text-muted)">選択してください</span>`
+      }
+    </div>
+  </div>`;
+}
+
+// ── LOADING ──
+function renderLoading() {
+  return `<div class="screen loading-screen">
+    <div class="loader"></div>
+    <p class="loading-text">あなたのブロックの根っこを<br>分析しています…</p>
+  </div>`;
+}
+
+// ── RESULT ──
+function renderResult() {
+  if (state.isCutoff) return renderCutoffResult();
+
+  const { mainType, level, deepTotal, scores, isHelper } = calcResult();
+  const key = `${mainType}-${level}`;
+  const data = RESULT_TEXTS[key];
+  const maxScore = Math.max(...Object.values(scores));
+
+  const scoreHtml = `
+    <div class="score-box">
+      <div class="score-box-title">YOUR BLOCK ANALYSIS</div>
+      <div class="score-section">
+        ${renderScoreRow('境界線', scores['境界線'], maxScore, 'fill-border')}
+        ${renderScoreRow('感情', scores['感情'], maxScore, 'fill-emotion')}
+        ${renderScoreRow('信念', scores['信念'], maxScore, 'fill-belief')}
+      </div>
+    </div>`;
+
+  const observeHtml = `
+    <div class="result-section-title">まず、これを試してみてください</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.8">お金にまつわるネガティブな反応が出た瞬間に、立ち止まって観察してみてください。</p>
+    <div class="observe-cards">
+      <div class="observe-card primary-card">
+        <div class="obs-num">${data.primaryObs.num}</div>
+        <div class="obs-q">${data.primaryObs.q}</div>
+        <div class="obs-desc">${data.primaryObs.desc}</div>
+      </div>
+      ${data.subObs.map(o => `
+        <div class="observe-card">
+          <div class="obs-num">${o.num}</div>
+          <div class="obs-q">${o.q}</div>
+          <div class="obs-desc">${o.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+    <p style="margin-top:20px;font-size:13px;color:var(--text-secondary);font-weight:500;line-height:1.8">答えを出そうとしなくていい。ただ、観察する。<br><strong style="color:var(--accent-gold-light)">気づく力が、全ての始まりです。</strong></p>`;
+
+  let ctaHtml = '';
+  if (isHelper) {
+    ctaHtml = `<div class="cta-box">
+      <div class="cta-tag">NEXT STEP</div>
+      <div class="cta-text">${RESULT_TEXTS['helper'].ctaText.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</div>
+    </div>`;
+  } else if (data.cta === 'session') {
+    ctaHtml = `<div class="cta-box">
+      <div class="cta-tag">NEXT STEP</div>
+      <div class="cta-text">${data.sessionText.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</div>
+      <div class="cta-buttons">
+        <a href="https://kemntpsc.gensparkspace.com/" target="_blank" class="btn-cta">▼ セッションの詳細はこちら</a>
+      </div>
+    </div>`;
+  } else {
+    ctaHtml = `<div class="cta-box">
+      <div class="cta-tag">NEXT STEP</div>
+      <div class="cta-text">引き続き、一緒に深めていきましょう。<br>次回作も楽しみにしていてください。</div>
+    </div>`;
+  }
+
+  return `<div class="screen">
+    <div class="deco-line"><div class="deco-dot"></div></div>
+    <div class="result-header">
+      <div class="result-eyebrow">Diagnosis Result</div>
+      <div class="result-type-badge">${data.badge}</div>
+      <h2 class="result-title">${data.title.replace(/\n/g,'<br>').replace(/「(.+?)」/g, '<span class="hl">「$1」</span>')}</h2>
+    </div>
+
+    ${scoreHtml}
+
+    <div class="result-body">
+      <p>${data.intro.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p>
+      ${observeHtml}
+    </div>
+
+    ${ctaHtml}
+
+    <div class="retry-row">
+      <button class="btn-secondary" id="btn-retry">← もう一度診断する</button>
+    </div>
+  </div>`;
+}
+
+function renderScoreRow(label, val, max, cls) {
+  const pct = max > 0 ? Math.round((val / max) * 100) : 0;
+  return `<div class="score-row">
+    <div class="score-label">${label}</div>
+    <div class="score-bar-bg"><div class="score-bar-fill ${cls}" style="width:${pct}%"></div></div>
+    <div class="score-val">${val}</div>
+  </div>`;
+}
+
+function renderCutoffResult() {
+  const data = RESULT_TEXTS['cutoff'];
+  return `<div class="screen result-cutoff">
+    <div class="deco-line"><div class="deco-dot"></div></div>
+    <div class="result-header">
+      <div class="result-eyebrow">Diagnosis Result</div>
+      <div class="cutoff-icon">🌱</div>
+      <h2 class="result-title">${data.title.replace(/\n/g,'<br>')}</h2>
+    </div>
+    <div class="result-body">
+      <p>${data.intro.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p>
+    </div>
+    <div class="cta-box">
+      <div class="cta-tag">NEXT STEP</div>
+      <div class="cta-text">焦らなくて大丈夫です。あなたのペースで、一歩ずつ。</div>
+    </div>
+    <div class="retry-row">
+      <button class="btn-secondary" id="btn-retry">← もう一度診断する</button>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────
+// EVENTS
+// ─────────────────────────────────────────
+
+function bindEvents() {
+  // Intro
+  const btnStart = document.getElementById('btn-start');
+  if (btnStart) btnStart.onclick = () => { state.screen = 'attr'; render(); };
+
+  // Attr
+  document.querySelectorAll('[data-attr]').forEach(btn => {
+    btn.onclick = () => {
+      state.attribute = btn.dataset.attr;
+      state.currentQ = 0;
+      state.screen = 'questions';
+      render();
+    };
+  });
+
+  // Options
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.onclick = () => {
+      const q = QUESTIONS[state.currentQ];
+      state.answers[q.id] = parseInt(btn.dataset.idx);
+
+      // 足切り判定
+      if (q.id === 'q0') {
+        const opt = q.options[parseInt(btn.dataset.idx)];
+        state.isCutoff = opt.cutoff;
+      }
+
+      render();
+    };
+  });
+
+  // Prev
+  const btnPrev = document.getElementById('btn-prev');
+  if (btnPrev) btnPrev.onclick = () => {
+    if (state.currentQ === 0) {
+      state.screen = 'attr';
+      render();
+    } else {
+      state.currentQ--;
+      render();
+    }
+  };
+
+  // Next
+  const btnNext = document.getElementById('btn-next');
+  if (btnNext) btnNext.onclick = () => {
+    const isLast = state.currentQ === QUESTIONS.length - 1;
+    if (isLast) {
+      state.screen = 'loading';
+      render();
+      setTimeout(() => {
+        state.screen = 'result';
+        render();
+      }, 2200);
+    } else {
+      state.currentQ++;
+      render();
+    }
+  };
+
+  // Retry
+  const btnRetry = document.getElementById('btn-retry');
+  if (btnRetry) btnRetry.onclick = () => {
+    state = { screen: 'intro', attribute: null, currentQ: 0, answers: {}, isCutoff: false };
+    render();
+  };
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

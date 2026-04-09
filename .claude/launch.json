@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "money-block",
+      "runtimeExecutable": "/usr/bin/ruby",
+      "runtimeArgs": ["/Users/mainarui/money-block-diagnosis/serve.rb"],
+      "port": 3456
+    }
+  ]
+}
